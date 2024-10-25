@@ -19,6 +19,11 @@ public class DataController {
         return "The actual version is 1.0.0";
     }
 
+    @GetMapping("/test")
+    public String version() {
+        return "Test SNYK scan";
+    }
+
     @GetMapping("/nations")
     public JsonNode getRandomNations() {
         var objectMapper = new ObjectMapper();
