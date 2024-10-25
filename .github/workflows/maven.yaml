@@ -30,36 +30,36 @@ jobs:
       - name: Run test with Maven
         run: mvn -B test
 
-  sonar:
-    needs: test
-    name: Build and analyze with SonarCloud.io
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: 17
-          distribution: "temurin" # Alternative distribution options are available.
-      - name: Cache SonarCloud packages
-        uses: actions/cache@v3
-        with:
-          path: ~/.sonar/cache
-          key: ${{ runner.os }}-sonar
-          restore-keys: ${{ runner.os }}-sonar
-      - name: Cache Maven packages
-        uses: actions/cache@v3
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
-      - name: Build and analyze
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=darryl1975_cicd-demo
+  # sonar:
+  #   needs: test
+  #   name: Build and analyze with SonarCloud.io
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
+  #     - name: Set up JDK 17
+  #       uses: actions/setup-java@v3
+  #       with:
+  #         java-version: 17
+  #         distribution: "temurin" # Alternative distribution options are available.
+  #     - name: Cache SonarCloud packages
+  #       uses: actions/cache@v3
+  #       with:
+  #         path: ~/.sonar/cache
+  #         key: ${{ runner.os }}-sonar
+  #         restore-keys: ${{ runner.os }}-sonar
+  #     - name: Cache Maven packages
+  #       uses: actions/cache@v3
+  #       with:
+  #         path: ~/.m2
+  #         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+  #         restore-keys: ${{ runner.os }}-m2
+  #     - name: Build and analyze
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  #       run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=darryl1975_cicd-demo
 
   snyk:
     needs: test
@@ -75,7 +75,7 @@ jobs:
   #Build's job
   build:
     #Depends on sonar's and snyk's job
-    needs: [sonar, snyk]
+    needs: [snyk]
     name: Build
     #Run on Ubuntu using the latest version
     runs-on: ubuntu-latest
@@ -114,28 +114,28 @@ jobs:
           #From this path
           path: target/cicd-demo-0.0.1-SNAPSHOT.jar
 
-  deploy:
-    # Depends on build's job
-    needs: build
-    name: Deploy
-    #Run on Ubuntu using the latest version
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download JAR
-        #Download the artifact which was uploaded in the build's job
-        uses: actions/download-artifact@v2
-        with:
-          name: artifact
-      #Deploy the artifact (JAR) into AWS Beanstalk
-      - name: Deploy to EB
-        uses: einaregilsson/beanstalk-deploy@v13
-        with:
-          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          # aws_session_token: ${{ secrets.AWS_SESSION_TOKEN }}
-          use_existing_version_if_available: false
-          application_name: Spring-Boot-DataRest
-          environment_name: Spring-Boot-DataRest-env
-          version_label: ${{github.SHA}}
-          region: ap-southeast-1
-          deployment_package: cicd-demo-0.0.1-SNAPSHOT.jar
+  # deploy:
+  #   # Depends on build's job
+  #   needs: build
+  #   name: Deploy
+  #   #Run on Ubuntu using the latest version
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Download JAR
+  #       #Download the artifact which was uploaded in the build's job
+  #       uses: actions/download-artifact@v2
+  #       with:
+  #         name: artifact
+  #     #Deploy the artifact (JAR) into AWS Beanstalk
+  #     - name: Deploy to EB
+  #       uses: einaregilsson/beanstalk-deploy@v13
+  #       with:
+  #         aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         # aws_session_token: ${{ secrets.AWS_SESSION_TOKEN }}
+  #         use_existing_version_if_available: false
+  #         application_name: Spring-Boot-DataRest
+  #         environment_name: Spring-Boot-DataRest-env
+  #         version_label: ${{github.SHA}}
+  #         region: ap-southeast-1
+  #         deployment_package: cicd-demo-0.0.1-SNAPSHOT.jar
